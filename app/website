@@ -1,0 +1,161 @@
+#! /usr/bin/env python3
+from flask import Flask, render_template, request
+from markupsafe import Markup
+import time, random, json, os
+from flask import redirect, url_for
+app = Flask(__name__)
+@app.route('/favicon.ico')
+def favicon():
+    return redirect(url_for('static', filename='favicon.ico'))
+@app.route('/')
+def index():
+    titleText="Hello Title"
+    bodyText="Hello World"
+    bodyText=bodyText + Markup("""
+    Welcome to Flask
+    <br>
+        <a href=/aggie>Say Hi</a>
+    </br>
+    <br>
+        <a href=/zone>zone</a>
+    </br>
+    <br>
+        <a href=/time_frame>time_frame</a>
+    </br>
+    <br>
+        <a href=/now>Watch</a>
+    </br>
+    <br>
+        <a href=/about>About</a>
+    </br>""")
+    return render_template('template.html',titleText=titleText, bodyText=bodyText)
+@app.route('/aggie')
+def aggie():
+    titleText="Hello Aggie"
+    bodyText=Markup("""
+    Response
+    <br>
+    -Aggie
+    </br><br>
+        <a href=/>home</a>
+    </br>""")
+    return render_template('template.html',titleText=titleText, bodyText=bodyText)
+@app.route('/now')
+def now():
+    titleText="The Current Time"
+    formatted_time = time.strftime("%H:%M:%S")
+    bodyText = "Time: " + formatted_time
+    bodyText=bodyText + Markup("""
+    <br>
+        <a href=/>home</a>
+    </br>""")
+    return render_template('template.html',titleText=titleText, bodyText=bodyText)
+@app.route('/zone', methods=['GET', 'POST'])
+def zone():
+    import json, os
+    filename = "data.json"
+    inventory = {"freezer": [], "fridge": [], "dry": []}
+    # Load existing data
+    if os.path.exists(filename):
+        with open(filename) as f:
+            saved = json.load(f)
+            if isinstance(saved, dict):
+                inventory.update(saved)
+    message = ""
+    if request.method == 'POST':
+        zone = request.form.get('zone')
+        item = request.form.get('item')
+        if zone in inventory and item:
+            inventory[zone].append(item)
+            message = f"Added {item} to {zone}"
+            with open(filename, "w") as f:
+                json.dump(inventory, f, indent=4)
+    bodyText = Markup("""
+        <form method="post">
+          <label>Zone</label>
+          <select name="zone">
+            <option value="freezer">Freezer</option>
+            <option value="fridge">Fridge</option>
+            <option value="dry">Dry</option>
+          </select><br>
+          <label>Item</label>
+          <input name="item"><br>
+          <button type="submit">Add Item</button>
+        </form>
+        <hr>""")
+    bodyText += f"<p>{message}</p>"
+    for k,v in inventory.items():
+        bodyText += f"<p><b>{k.title()}</b>: {', '.join(map(str, v))}</p>"
+
+    bodyText += Markup("<br><a href='/'>home</a>")
+    return render_template('template.html', titleText="Zone Inventory", bodyText=bodyText)
+@app.route('/about')
+def about():
+    titleText="About"
+    bodyText="Here is a random number for some important information " + str(random.randint(0,9999))
+    bodyText=bodyText + Markup("""
+    <br>
+        <a href=/>home</a>
+    </br>""")
+    return render_template('template.html',titleText=titleText, bodyText=bodyText)
+@app.route('/time_frame', methods=['GET', 'POST'])
+def time_frame():
+    filename = "stock.json"
+    message = ""
+    data = []
+
+    # Load existing orders
+    if os.path.exists(filename):
+        with open(filename) as f:
+            try:
+                data = json.load(f)
+            except json.JSONDecodeError:
+                data = []
+
+    if request.method == 'POST':
+        prod = request.form.get('prod')
+        stock_order = int(request.form.get('stock_order', 0))
+        variance = int(request.form.get('variance', 0))
+        order = stock_order - variance
+        season = request.form.get('season')
+
+        sys_data = {
+            'zone': 'cat',
+            'prod': prod,
+            'stock_order': stock_order,
+            'variance': variance,
+            'order': order,
+            'season': season
+        }
+        data.append(sys_data)
+        with open(filename, 'w') as f:
+            json.dump(data, f, indent=4)
+        message = "Order and data updated."
+    form_html = Markup("""
+        <br><a href='/'">home</a></br>
+        <h3>Order Trajectory on Timeframe</h3>
+        <form method="post">
+            <label>Product:</label><input name="prod"><br>
+            <label>Last Order Amount:</label><input type="number" name="stock_order"><br>
+            <label>Variance (demand - on shelf):</label><input type="number" name="variance"><br>
+            <label>Season:</label>
+                <select name="season">
+                    <option>winter</option>
+                    <option>spring</option>
+                    <option>summer</option>
+                    <option>fall</option>
+                </select><br>
+            <button type="submit">Update Order</button>
+        </form>
+        <hr>
+    """)
+    display_html = Markup("<h4>Order History</h4>")
+    if data:
+        for d in reversed(data[-5:]):  # show last 5
+            display_html += Markup(
+                f"<div>Product: {d['prod']}, Order: {d['order']}, Season: {d['season']}</div>"
+            )
+    bodyText = message + form_html + display_html
+    return render_template('template.html', titleText="Timeframe", bodyText=bodyText)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', debug=True)
