@@ -14,40 +14,13 @@ def index():
     bodyText=bodyText + Markup("""
     Welcome to Flask
     <br>
-        <a href=/aggie>Say Hi</a>
-    </br>
-    <br>
         <a href=/zone>zone</a>
     </br>
     <br>
         <a href=/time_frame>time_frame</a>
     </br>
     <br>
-        <a href=/now>Watch</a>
-    </br>
-    <br>
         <a href=/about>About</a>
-    </br>""")
-    return render_template('template.html',titleText=titleText, bodyText=bodyText)
-@app.route('/aggie')
-def aggie():
-    titleText="Hello Aggie"
-    bodyText=Markup("""
-    Response
-    <br>
-    -Aggie
-    </br><br>
-        <a href=/>home</a>
-    </br>""")
-    return render_template('template.html',titleText=titleText, bodyText=bodyText)
-@app.route('/now')
-def now():
-    titleText="The Current Time"
-    formatted_time = time.strftime("%H:%M:%S")
-    bodyText = "Time: " + formatted_time
-    bodyText=bodyText + Markup("""
-    <br>
-        <a href=/>home</a>
     </br>""")
     return render_template('template.html',titleText=titleText, bodyText=bodyText)
 @app.route('/zone', methods=['GET', 'POST'])
@@ -92,7 +65,7 @@ def zone():
 @app.route('/about')
 def about():
     titleText="About"
-    bodyText="Here is a random number for some important information " + str(random.randint(0,9999))
+    bodyText="Here is my contact information " + str(random.randint(0,9999))
     bodyText=bodyText + Markup("""
     <br>
         <a href=/>home</a>
