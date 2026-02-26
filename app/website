@@ -1,134 +1,508 @@
-#! /usr/bin/env python3
-from flask import Flask, render_template, request
+#!/usr/bin/env python3
+# hdmi_night.py - Production-ready improved version
+
+import os, json, time, random, logging
+from pathlib import Path
+from typing import Optional, Dict, Any, List
+from contextlib import contextmanager
+
+from flask import Flask, render_template, request, redirect, url_for, flash
 from markupsafe import Markup
-import time, random, json, os
-from flask import redirect, url_for
+import configparser, mysql.connector
+from mysql.connector import Error
+
+# from gdp_module_input_valid import run_gdp_flow
+from inv_prod import inv_prod_flow
+from input_token import token_flow ### 207 def login
+from business_idea import enumeration_flow
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+# Disable problematic imports for now
+
+# from nobel_prize_module_input_valid import run_prize_flow
+# from premier_league_input_valid import run_league_flow
+
 app = Flask(__name__)
+app.secret_key = os.urandom(24)  # CSRF protection
+cnx = None
+selected_json_path: Optional[str] = None
+
+DATA_DIR = Path("data")
+JSON_FILES_DIR = Path("json_files")
+DATA_DIR.mkdir(exist_ok=True)
+
+
+class DatabaseManager:
+    """Database connection manager with connection pooling"""
+    
+    def __init__(self):
+        self.connection = None
+    
+    @contextmanager
+    def get_cursor(self):
+        cursor = None
+        try:
+            if not self.connection or not self.connection.is_connected():
+                self._connect()
+            cursor = self.connection.cursor(prepared=True)
+            yield cursor
+            self.connection.commit()
+        except Error as e:
+            if cursor:
+                cursor.close()
+            logger.error(f"Database error: {e}")
+            if self.connection and self.connection.is_connected():
+                self.connection.rollback()
+            raise
+        finally:
+            if cursor:
+                cursor.close()
+    
+    def _connect(self):
+        config = configparser.ConfigParser()
+        if not config.read('contacts.cfg'):
+            raise RuntimeError("contacts.cfg not found")
+        
+        if 'database' not in config:
+            raise RuntimeError("No [database] section in contacts.cfg")
+        
+        db_config = config['database']
+        self.connection = mysql.connector.connect(
+            host=db_config['host'],
+            user=db_config['user'],
+            password=db_config['pass'],
+            database=db_config['db'],
+            autocommit=False
+        )
+        logger.info("✓ Database connected")
+    
+    def execute_query(self, query: str, params=None) -> List[tuple]:
+        """Execute query and return results"""
+        with self.get_cursor() as cursor:
+            cursor.execute(query, params or ())
+            return cursor.fetchall()
+
+
+db_manager = DatabaseManager()
+
+
+def select_json_file(directory: str) -> str:
+    """Select JSON file interactively with validation"""
+    directory = Path(directory).expanduser().resolve()
+    if not directory.is_dir():
+        raise ValueError(f"Not a directory: {directory}")
+
+    json_files = [f for f in directory.iterdir() if f.suffix.lower() == '.json']
+    if not json_files:
+        raise ValueError(f"No .json files found in: {directory}")
+
+    print(f"\nAvailable JSON files in {directory}:")
+    for i, f in enumerate(json_files, 1):
+        print(f"  {i}. {f.name}")
+
+    while True:
+        try:
+            choice = input(f"\nSelect file [1-{len(json_files)}]: ").strip()
+            idx = int(choice) - 1
+            if 0 <= idx < len(json_files):
+                return str(json_files[idx].resolve())
+            print("Invalid choice")
+        except ValueError:
+            print("Please enter a number")
+
+
+def load_json_data(filepath: str, default: Dict[str, Any]) -> Dict[str, Any]:
+    """Load JSON data with fallback"""
+    try:
+        with open(filepath) as f:
+            data = json.load(f)
+            return data if isinstance(data, dict) else default
+    except (json.JSONDecodeError, FileNotFoundError):
+        return default.copy()
+
+###     Reused Code     ###
+def save_json_data(filepath: str, data: Dict[str, Any]):
+    """Save JSON data atomically"""
+    tmp_path = Path(filepath + '.tmp')
+    try:
+        with tmp_path.open('w') as f:
+            json.dump(data, f, indent=2)
+        tmp_path.replace(filepath)
+    except Exception:
+        tmp_path.unlink(missing_ok=True)
+        raise
+
+def get_inventory_with_ids(filename: str) -> Dict[str, List[Dict]]:
+    '''Load auto id for edits'''
+    inventory = load_json_data(filename, {'freezer': [], 'fridge': [], 'dry': []})
+    for zone in inventory:
+        for i, item in enumerate(inventory[zone]):
+            if not isinstance(item, dict) or 'id' not in item:
+                inventory[zone][i] = {'id': f"{zone}_{i}_{int(time.time())}", 'name': str(item)}
+    return inventory
+
+def update_inventory_item(filename: str, zone: str, item_id: str, new_name: str):
+    ''''update item'''
+    inventory = load_json_data(filename, {"freezer": [], "fridge": [], "dry": []})
+    if zone in inventory:
+        for i, item in enumerate(inventory[zone]):
+            if isinstance(item, dict) and item.get('id') == item_id:
+                inventory[zone][i] = {'id': item_id, 'name': new_name.strip()}
+                save_json_data(filename, inventory)
+                return True
+        return False
+def delete_inventory_item(filename: str, zone: str, item_id: str):
+    ''''Delete item'''
+    inventory = load_json_data(filename, {"freezer": [], "fridge": [], "dry": []})
+    if zone in inventory:
+        inventory[zone] = [item for item in inventory[zone] if not (isinstance(item, dict) and item.get('id') == item_id)]
+        save_json_data(filename, inventory)
+        return True
+    return False
+
+# Routes
 @app.route('/favicon.ico')
 def favicon():
     return redirect(url_for('static', filename='favicon.ico'))
-@app.route('/')
+
+
+@app.route('/', methods=['GET'])
 def index():
-    titleText="Hello Title"
-    bodyText="Hello World"
-    bodyText=bodyText + Markup("""
-    Welcome to Flask
-    <br>
-        <a href=/zone>zone</a>
-    </br>
-    <br>
-        <a href=/time_frame>time_frame</a>
-    </br>
-    <br>
-        <a href=/about>About</a>
-    </br>""")
-    return render_template('template.html',titleText=titleText, bodyText=bodyText)
+    """Main dashboard with navigation"""
+    return render_template('valid_template.html',
+                         titleText="Dashboard",
+                         bodyText=Markup(f"""
+    <div style="font-family: Arial; max-width: 800px; margin: 20px auto;">
+        <h1>📊 Dashboard</h1>
+        <p><strong>Selected JSON:</strong> {selected_json_path or 'None'}</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 20px 0;">
+            <a href="/zone" style="padding: 15px; background: #e3f2fd; text-decoration: none; border-radius: 8px; text-align: center;">🧊 Zone Inventory</a>
+            <a href="/time_frame" style="padding: 15px; background: #f3e5f5; text-decoration: none; border-radius: 8px; text-align: center;">📈 Time Frame</a>
+            <a href="/contacts" style="padding: 15px; background: #e8f5e8; text-decoration: none; border-radius: 8px; text-align: center;">👥 Contacts</a>
+            <a href="/now" style="padding: 15px; background: #fff3e0; text-decoration: none; border-radius: 8px; text-align: center;">⏰ Time</a>
+            <a href="/about" style="padding: 15px; background: #fce4ec; text-decoration: none; border-radius: 8px; text-align: center;">ℹ️ About</a>
+            <a href="/login" style="padding: 15px; background: #fce4ec; text-decoration: none; border-radius: 8px; text-align: center;">👥 login</a>
+            <a href="/enumeration" style="padding: 15px; background: #fce4ec; text-decoration: none; border-radius: 8px; text-align: center;">📈 enumeration</a>
+        </div>
+    </div>
+    """))
+
+def append_to_json(new_data: dict, filename: str) -> None:
+    try:
+        with open(filename, 'r+', encoding='utf-8') as file:
+            file_data = json.load(file)
+            if isinstance(file_data, dict) and 'items' in file_data:
+                file_data['items'].append(new_data)
+            else:
+                raise ValueError('Expected "items" key in JSON structure.')
+            file.seek(0)
+            json.dump(file_data, file, indent=4)
+            file.truncate()
+    except FileNotFoundError:
+        with open(filename, 'w', encoding='utf-8') as file:
+            json.dump({'items': [new_data]}, file, indent=4)
+
+#   Create a secure login using tokens to show user specific content
+@app.route('/login', methods=['GET'])
+def login():
+    filename = DATA_DIR / "home_page.json"
+
+    run_program = token_flow()
+    print (run_program)
+    user_profiles = load_json_data(str(filename), {"session": [], "user": [], "token": [], "cookies": []})
+    if request.method == 'POST':
+        zone_name = request.form.get('user', '').strip()
+@app.route('/enumeration', methods=['GET'])
+def enumerate():
+    file_selection = JSON_FILES_DIR / f"{select_json_file()}"
+    begin_enumeration = enumeration_flow()
+    print (begin_enumeration)
+
+
 @app.route('/zone', methods=['GET', 'POST'])
 def zone():
-    import json, os
-    filename = "data.json"
-    inventory = {"freezer": [], "fridge": [], "dry": []}
-    # Load existing data
-    if os.path.exists(filename):
-        with open(filename) as f:
-            saved = json.load(f)
-            if isinstance(saved, dict):
-                inventory.update(saved)
-    message = ""
+    """Zone inventory: add/edit/delete items with live tables."""
+    filename = str(DATA_DIR / "data.json")
+    
+    # Handle POST actions
     if request.method == 'POST':
-        zone = request.form.get('zone')
-        item = request.form.get('item')
-        if zone in inventory and item:
-            inventory[zone].append(item)
-            message = f"Added {item} to {zone}"
-            with open(filename, "w") as f:
-                json.dump(inventory, f, indent=4)
-    bodyText = Markup("""
-        <form method="post">
-          <label>Zone</label>
-          <select name="zone">
-            <option value="freezer">Freezer</option>
-            <option value="fridge">Fridge</option>
-            <option value="dry">Dry</option>
-          </select><br>
-          <label>Item</label>
-          <input name="item"><br>
-          <button type="submit">Add Item</button>
-        </form>
-        <hr>""")
-    bodyText += f"<p>{message}</p>"
-    for k,v in inventory.items():
-        bodyText += f"<p><b>{k.title()}</b>: {', '.join(map(str, v))}</p>"
-
-    bodyText += Markup("<br><a href='/'>home</a>")
-    return render_template('template.html', titleText="Zone Inventory", bodyText=bodyText)
-@app.route('/about')
-def about():
-    titleText="About"
-    bodyText="Here is my contact information " + str(random.randint(0,9999))
-    bodyText=bodyText + Markup("""
-    <br>
-        <a href=/>home</a>
-    </br>""")
-    return render_template('template.html',titleText=titleText, bodyText=bodyText)
+        action = request.form.get('action')
+        zone_name = request.form.get('zone', '').strip()
+        item = request.form.get('item', '').strip()
+        inventory = get_inventory_with_ids(filename)
+        
+        if action == 'add' and zone_name in ['freezer', 'fridge', 'dry'] and item:
+            new_item = {'id': f"{zone_name}_{int(time.time())}", 'name': item}
+            inventory[zone_name].append(new_item)
+            save_json_data(filename, inventory)
+            
+            # Add to stock.json
+            zone_map = {
+                'freezer': {'code': 'c', 'location': 'Freezer'},
+                'fridge': {'code': 'b', 'location': 'The Walk-in'},
+                'dry': {'code': 'a', 'location': 'Dry'}
+            }
+            zone_info = zone_map.get(zone_name, {'code': 'e', 'location': zone_name.title()})
+            date_str = time.strftime('%Y-%m-%d')
+            sys_data = {
+                'type': 'object', 'properties': {
+                    'title': 'Order trajectory', 'subtitle': 'Auto-generated order',
+                    'updated_at': date_str, 
+                    'data': {'type': 'array', 'items': [{
+                        'rank': 1, 'order_date': date_str, 'current_period': 'winter',
+                        'zone': zone_info, 'product': item, 'product_count': 1, 'order_calc': 1
+                    }]}
+                }
+            }
+            append_to_json(sys_data, str(DATA_DIR / "stock.json"))
+            flash(f"✅ Added '{item}' to {zone_name}", 'success')
+            
+        elif action == 'edit':
+            item_id = request.form.get('item_id')
+            if update_inventory_item(filename, zone_name, item_id, item):
+                flash("✅ Updated!", 'success')
+            else:
+                flash("❌ Update failed", 'error')
+        elif action == 'delete':
+            item_id = request.form.get('item_id')
+            if delete_inventory_item(filename, zone_name, item_id):
+                flash("✅ Deleted!", 'success')
+            else:
+                flash("❌ Delete failed", 'error')
+    
+    # Build HTML - FIXED STRUCTURE
+    inventory = get_inventory_with_ids(filename)
+    zones_html = ""  # Initialize!
+    
+    for zone_name, items in inventory.items():
+        # FIXED: items_html is separate variable
+        items_html = "".join(
+            f"<tr><td>{item['name']}</td>"
+            f"<td><input value=\"{item['name']}\" style=\"width:120px;padding:4px;\" "
+            f"onchange=\"updateItem('{zone_name}', '{item['id']}', this.value)\"></td>"
+            f"<td><button onclick=\"deleteItem('{zone_name}', '{item['id']}')\" "
+            f"style=\"padding:4px 8px;background:#f44336;color:white;border:none;border-radius:3px;\">🗑️</button></td></tr>"
+            for item in items
+        ) or "<tr><td colspan='3' style='padding:20px;color:#444;'>Empty</td></tr>"
+        
+        # FIXED: Build complete zone table
+        zones_html += f"""
+        <div style="margin-bottom:30px;">
+            <h3 style="color:#2196f3;">🧊 {zone_name.title()}</h3>
+            <table style="width:100%;border-collapse:collapse;margin-bottom:15px;">
+                <thead><tr style="background:#f5f5f5;">
+                    <th style="padding:10px;border:1px solid #ddd;">Item</th>
+                    <th style="padding:10px;border:1px solid #ddd;">Edit</th>
+                    <th style="padding:10px;border:1px solid #ddd;">Action</th>
+                </tr></thead>
+                <tbody>{items_html}</tbody>
+            </table>
+        </div>"""
+    
+    # Summary display
+    zones_display = "".join(
+        f"<div><strong>{k.title()}:</strong> {', '.join(item['name'] for item in v) or 'Empty'}</div>"
+        for k, v in inventory.items()
+    )
+    
+    return render_template('valid_template.html',
+        titleText="Zone Inventory - Editable",
+        bodyText=Markup(f"""
+        <div style="max-width:600px;margin:20px auto;">
+            <h2>🧊 Inventory Management</h2>
+            {flash_messages()}
+            
+            <form method="post" style="margin:20px 0;padding:15px;background:#f0f8ff;border-radius:8px;">
+                <input type="hidden" name="action" value="add">
+                <div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap;">
+                    <select name="zone" style="padding:8px;flex:1;min-width:120px;">
+                        <option value="freezer">Freezer</option>
+                        <option value="fridge">Fridge</option>
+                        <option value="dry">Dry</option>
+                    </select>
+                    <input name="item" placeholder="Item name" style="padding:8px;flex:2;min-width:200px;" required>
+                    <button type="submit" style="padding:10px 20px;background:#2196f3;color:white;border:none;border-radius:4px;">➕ Add Item</button>
+                </div>
+            </form>
+            <hr><div style="font-size:16px;">{zones_display}</div>
+            {zones_html}
+            
+            <script>
+            function updateItem(zone, itemId, newName) {{
+                if (!newName.trim()) {{ alert('Name cannot be empty'); return; }}
+                const form = document.createElement('form');
+                form.method = 'POST'; form.style.display = 'none';
+                form.innerHTML = `
+                    <input type="hidden" name="action" value="edit">
+                    <input type="hidden" name="zone" value="${{zone}}">
+                    <input type="hidden" name="item_id" value="${{itemId}}">
+                    <input type="hidden" name="item" value="${{newName}}">
+                `;
+                document.body.appendChild(form); form.submit();
+            }}
+            function deleteItem(zone, itemId) {{
+                if (confirm('Delete permanently?')) {{
+                    const form = document.createElement('form');
+                    form.method = 'POST'; form.style.display = 'none';
+                    form.innerHTML = `
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="zone" value="${{zone}}">
+                        <input type="hidden" name="item_id" value="${{itemId}}">
+                    `;
+                    document.body.appendChild(form); form.submit();
+                }}
+            }}
+            </script>
+            <br><a href="/" style="color:#2196f3;font-size:16px;">← Back to Dashboard</a>
+        </div>"""))
 @app.route('/time_frame', methods=['GET', 'POST'])
 def time_frame():
-    filename = "stock.json"
+    filename = DATA_DIR / "stock.json"
+    data = load_json_data(str(filename), [])
+    
     message = ""
-    data = []
-
-    # Load existing orders
-    if os.path.exists(filename):
-        with open(filename) as f:
-            try:
-                data = json.load(f)
-            except json.JSONDecodeError:
-                data = []
-
     if request.method == 'POST':
-        prod = request.form.get('prod')
-        stock_order = int(request.form.get('stock_order', 0))
-        variance = int(request.form.get('variance', 0))
-        order = stock_order - variance
-        season = request.form.get('season')
-
-        sys_data = {
-            'zone': 'cat',
-            'prod': prod,
-            'stock_order': stock_order,
-            'variance': variance,
-            'order': order,
-            'season': season
-        }
-        data.append(sys_data)
-        with open(filename, 'w') as f:
-            json.dump(data, f, indent=4)
-        message = "Order and data updated."
-    form_html = Markup("""
-        <br><a href='/'">home</a></br>
-        <h3>Order Trajectory on Timeframe</h3>
-        <form method="post">
-            <label>Product:</label><input name="prod"><br>
-            <label>Last Order Amount:</label><input type="number" name="stock_order"><br>
-            <label>Variance (demand - on shelf):</label><input type="number" name="variance"><br>
-            <label>Season:</label>
+        try:
+            prod = request.form.get('prod', '').strip()
+            stock_order = int(request.form.get('stock_order', 0))
+            variance = int(request.form.get('variance', 0))
+            season = request.form.get('season', 'winter')
+            
+            order = stock_order - variance
+            record = {
+                'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                'prod': prod, 'stock_order': stock_order, 'variance': variance,
+                'order': order, 'season': season
+            }
+            data.append(record)
+            save_json_data(str(filename), data[-100:])  # Keep last 100 records
+            flash(f"Saved order for {prod}: {order}", 'success')
+        except ValueError:
+            flash("Please enter valid numbers", 'error')
+    
+    recent_orders = data[-5:]
+    orders_html = "".join(
+        f"<div style='padding: 8px; border-bottom: 1px solid #eee;'>{d['prod']}: "
+        f"<strong>{d['order']}</strong> ({d['season']}) - {d.get('timestamp', 'N/A')}</div>"
+        for d in reversed(recent_orders)
+    ) or "<p>No orders yet</p>"
+    
+    return render_template('valid_template.html', titleText="Order Trajectory",
+                         bodyText=Markup(f"""
+    <div style="max-width: 600px; margin: 20px auto;">
+        <h2>📈 Order Trajectory</h2>
+        {flash_messages()}
+        <form method="post" style="margin: 20px 0;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <input name="prod" placeholder="Product" required>
+                <input type="number" name="stock_order" placeholder="Stock Order" required>
+                <input type="number" name="variance" placeholder="Variance">
                 <select name="season">
-                    <option>winter</option>
-                    <option>spring</option>
-                    <option>summer</option>
-                    <option>fall</option>
-                </select><br>
-            <button type="submit">Update Order</button>
+                    <option>winter</option><option>spring</option>
+                    <option>summer</option><option>fall</option>
+                </select>
+            </div>
+            <button type="submit" style="padding: 10px 20px; background: #4caf50; color: white; border: none; border-radius: 4px; margin-top: 10px;">Update Order</button>
         </form>
         <hr>
-    """)
-    display_html = Markup("<h4>Order History</h4>")
-    if data:
-        for d in reversed(data[-5:]):  # show last 5
-            display_html += Markup(
-                f"<div>Product: {d['prod']}, Order: {d['order']}, Season: {d['season']}</div>"
+        <h3>Last 5 Orders</h3>
+        <div>{orders_html}</div>
+        <br><a href="/" style="color: #2196f3;">← Back to Dashboard</a>
+    </div>
+    """))
+
+
+@app.route('/contacts')
+def contacts():
+    try:
+        contacts = db_manager.execute_query(
+            "SELECT id, CONCAT(first, ' ', last) as name FROM contactsTable ORDER BY id"
+        )
+        contacts_html = "".join(
+            f"<tr><td>{c[0]}</td><td><a href='/contactsDetail/{c[0]}'>{c[1]}</a></td></tr>"
+            for c in contacts
+        ) or "<tr><td colspan='2'>No contacts found</td></tr>"
+        
+        return render_template('valid_template.html', titleText="Contacts",
+                             bodyText=Markup(f"""
+            <div style="max-width: 600px; margin: 20px auto;">
+                <h2>👥 Contacts</h2>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                    <tr style="background: #f5f5f5;"><th>ID</th><th>Name</th></tr>
+                    {contacts_html}
+                </table>
+                <br><a href="/" style="color: #2196f3;">← Back to Dashboard</a>
+            </div>
+            """))
+    except Exception:
+        return render_template('valid_template.html', titleText="Contacts", 
+                             bodyText="Database unavailable")
+
+
+# Simplified routes
+@app.route('/now')
+def now():
+    return render_template('valid_template.html', 
+                         titleText="Current Time",
+                         bodyText=f"<h2>⏰ {time.strftime('%H:%M:%S %Z')}</h2><a href='/'>← Dashboard</a>")
+
+
+@app.route('/about')
+def about():
+    return render_template('valid_template.html', 
+                         titleText="About",
+                         bodyText=f"<h2>About</h2><p>Server ID: {random.randint(1000,9999)}</p><a href='/'>← Dashboard</a>")
+
+
+@app.route('/search')
+def search():
+    query = request.args.get('q', '').strip()
+    results = []
+    if query:
+        try:
+            results = db_manager.execute_query(
+                "SELECT id, CONCAT(first, ' ', last) as name, email FROM contactsTable "
+                "WHERE Phone_Number LIKE %s OR CONCAT(first, ' ', last) LIKE %s",
+                (f'%{query}%', f'%{query}%')
             )
-    bodyText = message + form_html + display_html
-    return render_template('template.html', titleText="Timeframe", bodyText=bodyText)
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True)
+        except Exception:
+            pass
+    return render_template('search.html', results=results, query=query)
+
+
+def flash_messages():
+    """Render flash messages"""
+    from flask import get_flashed_messages
+    messages = get_flashed_messages(with_categories=True)
+    if not messages:
+        return ""
+    return Markup("".join(
+        f'<div style="padding: 10px; margin: 10px 0; border-radius: 4px; '
+        f'background: {"#d4edda" if cat=="success" else "#f8d7da"}; '
+        f'color: {"#155724" if cat=="success" else "#721c24"};">{msg}</div>'
+        for cat, msg in messages
+    ))
+
+
+if __name__ == "__main__":
+    print("🚀 Starting improved Flask app...")
+    
+    # JSON selection
+    try:
+        selected_json_path = select_json_file(r"C:/Users/beami/OneDrive/Desktop/info sec")
+        logger.info(f"✓ Selected JSON: {selected_json_path}")
+    except Exception as e:
+        logger.warning(f"✗ JSON selection failed: {e}")
+    
+    # Database (fails gracefully)
+    try:
+        db_manager._connect()
+    except Exception as e:
+        logger.warning(f"Database unavailable: {e}")
+    
+    # Start server
+    app.run(host='0.0.0.0', port=5000, debug=False)
+    logger.info("Server stopped")
