@@ -1,0 +1,409 @@
+[
+    {
+        "zone": "cat",
+        "prod": "Any",
+        "stock_order": 7,
+        "variance": 2,
+        "order": 5,
+        "season": "fall"
+    },
+    {
+        "zone": "cat",
+        "prod": "steaks",
+        "stock_order": 2,
+        "variance": 1,
+        "order": 1,
+        "season": "fall"
+    },
+    {
+        "zone": "default_zone",
+        "product": "stock",
+        "stock_order": 100,
+        "season": "winter",
+        "timeframe_adj": 739,
+        "last_actual_variance": 9
+    },
+    "order\n\t<h>cat</h>;\n <p>shrimp; 13</p>",
+    "order\n\t<h>Zone 4</h>;\n <p>crispers; 8</p>",
+    "order placed on date for current period:\n\t<h>Zone 4</h>;\n <p>burger; 12</p>",
+    "order placed on date for current period:\n\t<h>Zone 4</h>;\n <p>buns; 10</p>",
+    "order placed on date for current period:\n\t<h>Zone 4</h>;\n <p>shrimp; 6</p>",
+    "order placed on date for current period:\n\t<h>Zone 4</h>;\n <p>moz; 8</p>",
+    "order placed on <class 'datetime.date'> for current period:\n\t<h>Zone 4</h>;\n <p>swcs; 1</p>",
+    "order placed on 2026-01-25 for current period:\n\t<h>Zone 4</h>;\n <p>steak; 2</p>",
+    "order placed on 2026-01-25 for current period:\n\t<h>Zone 4</h>;\n <p>chicken; 84321</p>",
+    ",type,; ,object, . \n ,properties,; [] \n \t ,title,; [,type,; ,string,], \n \t ,subtitle; [,type,; ,string,], \n\t ,updated_at,; [,type,; ,string,], \n\t ,data,; [\n\t\t ,type,; ,array,, \n\t\t ,items,; [ \n\t\t\t ,type,; ,object,,\n\t\t\t ,properties,; [\n\t\t\t\t ,rank,; [,type,; [,string,, ,number,, ,null,]], \n\t\t\t\t , --this_is_order_date--,; [,type,; ,string,], \n\t\t\t\t ,--this_is_current_period--,; [,type,; [,string,, ,number,, ,null,]], \n\t\t\t\t ,--this_is_zone--,; [,type,; [,string,, ,number,, ,null,]], \n\t\t\t\t ,--this_is_product--,; [,type,; [,string,, ,number,, ,null,]], \n\t\t\t\t ,--this_is_product_count--,; [,type,; [,string,, ,number,, ,null,]], \n\t\t\t\t]]  order placed on 2026-01-25 for current period:\n\t<h>Zone 4</h>;\n <p>tequila; 35</p>",
+    {
+        "type": "object",
+        "properties": {
+            "title": {
+                "type": "string",
+                "value": "Order trajectory"
+            },
+            "subtitle": {
+                "type": "string",
+                "value": "Auto-generated order"
+            },
+            "updated_at": {
+                "type": "string",
+                "value": "2026-01-25"
+            },
+            "data": {
+                "type": "array",
+                "items": [
+                    {
+                        "rank": {
+                            "type": "number",
+                            "value": 1
+                        },
+                        "order_date": {
+                            "type": "string",
+                            "value": "2026-01-25"
+                        },
+                        "current_period": {
+                            "type": "number",
+                            "value": 1
+                        },
+                        "zone": {
+                            "type": "string",
+                            "value": "Zone 4"
+                        },
+                        "product": {
+                            "type": "string",
+                            "value": "gin"
+                        },
+                        "product_count": {
+                            "type": "number",
+                            "value": 7
+                        },
+                        "order_calc": {
+                            "type": "number",
+                            "value": 5
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "type": "object",
+        "properties": {
+            "title": {
+                "type": "string",
+                "value": "Order trajectory"
+            },
+            "subtitle": {
+                "type": "string",
+                "value": "Auto-generated order"
+            },
+            "updated_at": {
+                "type": "string",
+                "value": "2026-01-25"
+            },
+            "data": {
+                "type": "array",
+                "items": [
+                    {
+                        "rank": {
+                            "type": "number",
+                            "value": 1
+                        },
+                        "order_date": {
+                            "type": "string",
+                            "value": "2026-01-25"
+                        },
+                        "current_period": {
+                            "type": "number",
+                            "value": 1
+                        },
+                        "zone": {
+                            "type": "string",
+                            "value": "Zone 4"
+                        },
+                        "product": {
+                            "type": "string",
+                            "value": "juice"
+                        },
+                        "product_count": {
+                            "type": "number",
+                            "value": 21
+                        },
+                        "order_calc": {
+                            "type": "number",
+                            "value": 5
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "type": "object",
+        "properties": {
+            "title": {
+                "type": "string",
+                "value": "Order trajectory"
+            },
+            "subtitle": {
+                "type": "string",
+                "value": "Auto-generated order"
+            },
+            "updated_at": {
+                "type": "string",
+                "value": "2026-01-25"
+            },
+            "data": {
+                "type": "array",
+                "items": [
+                    {
+                        "rank": {
+                            "type": "number",
+                            "value": 1
+                        },
+                        "order_date": {
+                            "type": "string",
+                            "value": "2026-01-25"
+                        },
+                        "current_period": {
+                            "type": "number",
+                            "value": "winter"
+                        },
+                        "zone": {
+                            "type": "string",
+                            "value": null
+                        },
+                        "product": {
+                            "type": "string",
+                            "value": "steak"
+                        },
+                        "product_count": {
+                            "type": "number",
+                            "value": 1
+                        },
+                        "order_calc": {
+                            "type": "number",
+                            "value": 1
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "type": "object",
+        "properties": {
+            "title": {
+                "type": "string",
+                "value": "Order trajectory"
+            },
+            "subtitle": {
+                "type": "string",
+                "value": "Auto-generated order"
+            },
+            "updated_at": {
+                "type": "string",
+                "value": "2026-01-25"
+            },
+            "data": {
+                "type": "array",
+                "items": [
+                    {
+                        "rank": {
+                            "type": "number",
+                            "value": 1
+                        },
+                        "order_date": {
+                            "type": "string",
+                            "value": "2026-01-25"
+                        },
+                        "current_period": {
+                            "type": "number",
+                            "value": "sping"
+                        },
+                        "zone": {
+                            "type": "string",
+                            "value": null
+                        },
+                        "product": {
+                            "type": "string",
+                            "value": "chip bowl"
+                        },
+                        "product_count": {
+                            "type": "number",
+                            "value": 1
+                        },
+                        "order_calc": {
+                            "type": "number",
+                            "value": 1
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "type": "object",
+        "properties": {
+            "title": {
+                "type": "string",
+                "value": "Order trajectory"
+            },
+            "subtitle": {
+                "type": "string",
+                "value": "Auto-generated order"
+            },
+            "updated_at": {
+                "type": "string",
+                "value": "2026-01-25"
+            },
+            "data": {
+                "type": "array",
+                "items": [
+                    {
+                        "rank": {
+                            "type": "number",
+                            "value": 1
+                        },
+                        "order_date": {
+                            "type": "string",
+                            "value": "2026-01-25"
+                        },
+                        "current_period": {
+                            "type": "number",
+                            "value": "winter"
+                        },
+                        "zone": {
+                            "type": "string",
+                            "value": {
+                                "code": "b",
+                                "location": "The Walk-in"
+                            }
+                        },
+                        "product": {
+                            "type": "string",
+                            "value": "pickles"
+                        },
+                        "product_count": {
+                            "type": "number",
+                            "value": 11
+                        },
+                        "order_calc": {
+                            "type": "number",
+                            "value": 6
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "type": "object",
+        "properties": {
+            "title": {
+                "type": "string",
+                "value": "Order trajectory"
+            },
+            "subtitle": {
+                "type": "string",
+                "value": "Auto-generated order"
+            },
+            "updated_at": {
+                "type": "string",
+                "value": "2026-01-25"
+            },
+            "data": {
+                "type": "array",
+                "items": [
+                    {
+                        "rank": {
+                            "type": "number",
+                            "value": 1
+                        },
+                        "order_date": {
+                            "type": "string",
+                            "value": "2026-01-25"
+                        },
+                        "current_period": {
+                            "type": "number",
+                            "value": "winter"
+                        },
+                        "zone": {
+                            "type": "string",
+                            "value": {
+                                "code": "a",
+                                "location": "Dry"
+                            }
+                        },
+                        "product": {
+                            "type": "string",
+                            "value": "daily"
+                        },
+                        "product_count": {
+                            "type": "number",
+                            "value": 4
+                        },
+                        "order_calc": {
+                            "type": "number",
+                            "value": 2
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "type": "object",
+        "properties": {
+            "title": {
+                "type": "string",
+                "value": "Order trajectory"
+            },
+            "subtitle": {
+                "type": "string",
+                "value": "Auto-generated order"
+            },
+            "updated_at": {
+                "type": "string",
+                "value": "2026-01-25"
+            },
+            "data": {
+                "type": "array",
+                "items": [
+                    {
+                        "rank": {
+                            "type": "number",
+                            "value": 1
+                        },
+                        "order_date": {
+                            "type": "string",
+                            "value": "2026-01-25"
+                        },
+                        "current_period": {
+                            "type": "number",
+                            "value": "winter"
+                        },
+                        "zone": {
+                            "type": "string",
+                            "value": {
+                                "code": "a",
+                                "location": "Dry"
+                            }
+                        },
+                        "product": {
+                            "type": "string",
+                            "value": "blank"
+                        },
+                        "product_count": {
+                            "type": "number",
+                            "value": 5
+                        },
+                        "order_calc": {
+                            "type": "number",
+                            "value": 2
+                        }
+                    }
+                ]
+            }
+        }
+    }
+]

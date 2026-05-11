@@ -1,0 +1,100 @@
+import json
+from bs4 import BeautifulSoup
+
+# Multiple HTML samples with embedded JSON
+html_samples = [
+    # 1. Simple flat JSON
+    """
+    <html><body>
+    <script type="application/ld+json">
+    {"name": "Laptop", "price": 899.99, "inStock": true}
+    </script>
+    </body></html>
+    """,
+
+    # 2. Nested JSON
+    """
+    <html><body>
+    <script type="application/ld+json">
+    {
+        "name": "Smartphone",
+        "price": 499.99,
+        "specs": {
+            "brand": "PhoneCo",
+            "model": "X200",
+            "features": ["5G", "OLED", "128GB Storage"]
+        }
+    }
+    </script>
+    </body></html>
+    """,
+
+    # 3. Array of objects
+    """
+    <html><body>
+    <script type="application/ld+json">
+    [
+        {"id": 1, "title": "Book A", "price": 12.5},
+        {"id": 2, "title": "Book B", "price": 15.0}
+    ]
+    </script>
+    </body></html>
+    """,
+
+    # 4. Multiple JSON script tags
+    """
+    <html><body>
+    <script type="application/ld+json">
+    {"type": "Product", "name": "Headphones"}
+    </script>
+    <script type="application/ld+json">
+    {"type": "Review", "rating": 4.5, "author": "John Doe"}
+    </script>
+    </body></html>
+    """,
+
+    # 5. Messy formatting & extra HTML
+    """
+    <html>
+    <head><title>Test</title></head>
+    <body>
+    <h1>Welcome</h1>
+    <p>Some text before JSON</p>
+    <script type="application/ld+json">
+    {
+        "event": "Concert",
+        "date": "2025-12-31",
+        "location": {
+            "city": "New York",
+            "venue": "Madison Square Garden"
+        }
+    }
+    </script>
+    <p>Some text after JSON</p>
+    </body>
+    </html>
+    """
+]
+
+def extract_json_from_html(html):
+    """Extracts all JSON objects from <script type="application/ld+json"> tags."""
+    soup = BeautifulSoup(html, "html.parser")
+    json_data_list = []
+
+    for script_tag in soup.find_all("script", type="application/ld+json"):
+        try:
+            # Clean and parse JSON
+            data = json.loads(script_tag.string.strip())
+            json_data_list.append(data)
+        except (json.JSONDecodeError, AttributeError) as e:
+            print("Skipping invalid JSON:", e)
+
+    return json_data_list
+
+# Test extraction on all samples
+for i, html in enumerate(html_samples, start=1):
+    print(f"\n--- Sample {i} ---")
+    extracted = extract_json_from_html(html)
+    for idx, data in enumerate(extracted, start=1):
+        print(f"JSON #{idx}:")
+        print(json.dumps(data, indent=4))

@@ -1,0 +1,61 @@
+{% extends "valid_template.html" %}
+{% block bodyText %}
+{% raw %}
+<!-- LOOK INTO VITE/ VUE FOR TRANSLATING POST GET -->
+<!DOCTYPE html>
+<html lang="en">
+    <div style="max-width:400px;margin:40px auto;padding:20px;background:white;border-radius:8px">
+        <h2> Login </h2>
+        {{ self.flash_messages()|safe }}
+        <table style="width:100%;border-collapse:collapse;margin-bottom:15px;">
+            <thread><tr>
+                <th style="padding:10px;border:1px solid #ddd;">User</th>
+                <th style="padding:10px;border:1px solid #ddd;">Permissions</th>
+                <th style="padding:10px;border:1px solid #ddd;">Value</th>
+            </tr></thread>
+            <tbody>{items_html}</tbody>
+        </table>
+        <form method="post" style="display:flex;flex-direction:column;gap:10px">
+            <input name="user" placeholder="Username" required 
+                    style="padding:12px;font-size:16px;border:1px solid #ddd;border-radius:4px">
+            <button type="submit" style="padding:12px;background:#2196f3;color:white;border:none;border-radius:4px;font-size:16px">
+                Login
+            </button>
+        </form>
+
+<!-- This will login in the user -->
+        <script>
+        function updateItem(user, permissions, value) {{
+            if (!newName.trim()) {{ alert('Name cannot be empty'); return; }}
+            const form = document.createElement('form');
+            form.method = 'POST'; form.style.display = 'none';
+            form.innerHTML = `
+                <input type="hidden" name="action" value="edit">
+                <input type="hidden" name="user" value="${{user}}">
+                <input type="hidden" name="permissions" value="${{permissions}}">
+                <input type="hidden" name="value" value="${{value}}">
+            `;
+            document.body.appendChild(form); form.submit();
+        }}
+        function deleteItem(user, permissions) {{
+            if (confirm('Delete permanently?')) {{
+                const form = document.createElement('form');
+                form.method = 'POST'; form.style.display = 'none';
+                form.innerHTML = `
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="user" value="${{user}}">
+                    <input type="hidden" name="permissions" value="${{permissions}}">
+                `;
+                document.body.appendChild(form); form.submit();
+            }}
+        }}
+        </script>
+        <body>
+            <img src="{{ url_for('static', filename='shoes.jpg') }}" alt="shoes Image">
+        </body>
+        <a href="/dash" style="display:block;margin-top:20px;color:#2196f3"><- Dashboard</a>
+    </div>
+
+{% endraw %}
+{% endblock %}
+</html>

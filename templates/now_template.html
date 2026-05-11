@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+        <title>{{ titletext }}</title>
+    </head>
+    <body>
+        <h1>{{ titleText }}</h1>
+        <div>{{ bodyText }}</div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div>
+                    {% for category, message in messages %}
+                        <p><strong>{{  category|capitalize }}</strong> {{  message }}</p>
+                    {%  endfor  %}
+                </div>
+            {%  endif   %}
+        {%  endwith %}
+        <form method="post" style="margin:20px 0;padding:15px;background: #f0f8ff;border-radius:8px;">
+            <input type="hidden" name="action" value="add">
+            <div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap;">
+                <div>
+                    <h2>Storage Types | </h2>
+                    <select name="storage_type">
+                        {% for storage in storageTypes %}
+                            <option value="{{ storage  }}">{{ storage }}</option>
+                        {%  endfor  %}
+                    </select>
+                </div>
+                <div>
+                    <h2>    Item Types  </h2> <!-- item -->
+                    <select name="item_type"> <!-- item -->
+                        {%  for item in itemTypes   %} <!-- item -->
+                            <option value="{{ item}}">{{ item }}</option> <!-- item -->
+                        {%  endfor  %}
+                    </select>
+                </div>
+                <div>
+                    <h2>|   Value Levels</h2>
+                    <select name="value_level">
+                        {%  for value in valueLevels    %}
+                            <option value="{{  value   }}">{{ value }}</option>
+                        {%  endfor  %}
+                    </select>
+                </div>
+                <input name="item" placeholder="Item name" style="padding:8px;flex:2;min-width:200px;" required>
+                <button type="submit" style="padding: 10px 20px; background: #2196f3;color: white;border: none;border-radius: 4px;">add</button>
+            </div>
+        </form>
+        <hr>
+        <div style="font-size: 16px;">{{ zones_display }}</div>
+        {{ zones_html|safe }}
+        <img src="{{ url_for('static', filename='kitchen.jpg') }}" alt="kitchen Image">
+        <img src="{{ url_for('static', filename='banana-hat.jpg') }}" alt="hat Image">
+    </body>
+    <hr>
+    <div style="font-size:16px;">{{ zones_display }}</div>
+    {{ zones_html|safe }}
+    <script>
+    function updateItem(zone, itemId, newName) {
+        if (!newName || !newName.trim()) { alert('Name cannot be empty'); return; }
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.style.display = 'none';
+        form.innerHTML = `
+            <input type="hidden" name="action" value="edit">
+            <input type="hidden" name="zone" value="${zone}">
+            <input type="hidden" name="item_id" value="${itemId}"> // <!-- item -->
+            <input type="hidden" name="item" value="${newName}"> 
+        `;
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    function deleteItem(zone, itemId) {
+        if (confirm('Delete permanently?')) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.style.display = 'none';
+            form.innerHTML = `
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="zone" value="${zone}"
+            <input type="hidden" name="item_id" value="${itemId}" // <!-- item --> 
+            `;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+    </script>
+    <a href="/dash" style="display:block;margin-top:20px;color:#2196f3"><- Dashboard</a>
+</html>
+
+<!-- This can be used for lead time, and mrp -->

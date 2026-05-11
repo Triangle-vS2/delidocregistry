@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ titletext }}</title>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+<body>
+    <h1>{{ titleText }}</h1>
+    <p>{{ bodyText }}</p>
+    <img src="{{ url_for('static', filename='kitchen.jpg') }}" alt="kitchen Image">
+    <img src="{{ url_for('static', filename='banana-hat.jpg') }}" alt="hat Image">
+    <br><a href="/dash" style="color:#2196f3;font-size:16px;">← Return Dashboard </a>
+    <br><a href="/zone" style="color:#2196f3;font-size:16px;">← Use Zone </a>
+    <br><a href="/" style="color:#2196f3;font-size:16px;">← Access Profile  </a>
+</body>
+</html>

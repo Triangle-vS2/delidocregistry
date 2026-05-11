@@ -1,0 +1,31 @@
+{
+  "freezer": [
+    {
+      "id": "consumable_a_7954_1772317736",
+      "sku": "consumable_a_7954",
+      "name": "error",
+      "count": 1,
+      "zone": "freezer",
+      "direction": "Import"
+    },
+    {
+      "id": "consumable_a_5488_1772317746",
+      "sku": "consumable_a_5488",
+      "name": "foo bar",
+      "count": 4,
+      "zone": "freezer",
+      "direction": "Export"
+    }
+  ],
+  "fridge": [],
+  "dry": [
+    {
+      "id": "unconsumable_b_8795_1774982200",
+      "sku": "unconsumable_b_8795",
+      "name": "description; \\t part #101 | \\t seat assembly | quantity required 1",
+      "count": 1,
+      "zone": "dry",
+      "direction": "Export"
+    }
+  ]
+}

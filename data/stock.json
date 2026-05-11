@@ -1,0 +1,10 @@
+[
+  {
+    "timestamp": "2026-03-21 15:56:00",
+    "prod": "case of glass bottles",
+    "stock_order": 1,
+    "variance": -1,
+    "order": 2,
+    "season": "spring"
+  }
+]

@@ -1,0 +1,58 @@
+{
+  "freezer": [
+    {
+      "id": "consumable_c_1772309210",
+      "name": "description; \\t part #101 | \\t seat assembly | quantity required 1"
+    },
+    {
+      "id": "consumable_a_1772309255",
+      "sku": "consumable_a",
+      "name": "vanilla ice cream",
+      "count": 2,
+      "zone": "freezer"
+    },
+    {
+      "id": "consumable_a_1774982221",
+      "sku": "consumable_a",
+      "name": "description; \\t part #101 | \\t seat assembly | quantity required 1",
+      "count": 1,
+      "zone": "freezer"
+    },
+    {
+      "id": "consumable_a_1775766769",
+      "sku": "consumable_a",
+      "name": "thing",
+      "count": 1,
+      "zone": "freezer"
+    },
+    {
+      "id": "consumable_a_1775766793",
+      "sku": "consumable_a",
+      "name": "foo bar",
+      "count": 3,
+      "zone": "freezer"
+    }
+  ],
+  "fridge": [
+    {
+      "id": "consumable_b_1772309221",
+      "sku": "consumable_b",
+      "name": "cake",
+      "count": 1,
+      "zone": "fridge"
+    }
+  ],
+  "dry": [
+    {
+      "id": "consumable_a_1772309234",
+      "name": "description; \\t part #101 | \\t seat assembly | quantity required 1"
+    },
+    {
+      "id": "consumable_b_1772578838",
+      "sku": "consumable_b",
+      "name": "cheese curds",
+      "count": 1,
+      "zone": "dry"
+    }
+  ]
+}

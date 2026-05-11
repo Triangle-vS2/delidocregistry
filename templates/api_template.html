@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>API Key Example</title>
+        <style>
+            body { font-family: Calibri, sans-serif; margin: 20px; }
+            input, button { padding: 8px; margin: 5px 0; }
+            #result { margin-top: 15px; }
+        </style>
+    </head>
+    <body>
+        <h1>SKU Lookup</h1>
+        <label for="zone">Enter Zone:</label>
+        <input type="text" id="zone" placeholder="freezer, fridge, dry">
+        <button id="getZone">Get Zone</button>
+
+        <div id="result"></div>
+
+        <script>
+            // Assign your API key here
+            const API_KEY = "at14cef64iykyk217u"; //
+            const BASE_URL = "https://api.beamiestsi.me/data/1.3/inventory";
+
+            document.getElementById("getZone").addEventListener("click", async () => {
+                const zone = document.getElementById("zone").value.trim();
+                const resultDiv = document.getElementById("result");
+
+                //  Input Validation
+                if (!city) {
+                    resultDiv.textContent = "Please enter a zone:> ";
+                    return;
+                }
+
+                try {
+                    //  Build the API URL with the key
+                    const url = `${BASE_URL}?Q=${encodeURIComponent(zone)}&appid=${API_KEY}&units=metric`;
+                    const response = await fetch(url);
+
+                    if (!response.ok) {
+                        throw new Error(`Error: ${response.status} ${response.statusText}`);
+                    }
+
+                    const data = await response.json();
+
+                    //  Display product info
+                    resultDiv.innerHTML = `
+                    <h3> Zone in ${data.name}</h3>
+                    <p>Quantity: ${data.main.temp}#</p>
+                    <p>Value: ${data.weather[0].description}</p>
+                    `;
+                } catch (error) {
+                    resultDiv.textContent = `Failed to fetch zone: ${error.message}`;
+                }
+            });
+        </script>
+    </body>
+</html>

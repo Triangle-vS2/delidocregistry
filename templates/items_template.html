@@ -1,0 +1,12 @@
+<div>
+
+    items_html = "".join(
+            f"<tr><td>{item.get('name', 'Unknown')} <strong style='color:#4caf50'>(x{item.get('count', 1)})</strong> "
+            f"<br><small>SKU: {item.get('sku', 'N/A')}</small></td>"
+            f"<td><input value=\"{item.get('name', '')}\" style=\"width:120px;padding:4px;\" "
+            f"onchange=\"updateItem('{zone_name}', '{item.get('id', 'no-id')}', this.value)\"></td>"
+            f"<td><button onclick=\"deleteItem('{zone_name}', '{item.get('id', 'no-id')}')\" "
+            f"style=\"padding:4px 8px;background:#f44336;color:white;border:none;border-radius:3px;\">🗑️</button></td></tr>"
+            for item in items
+        ) or "<tr><td colspan='3' style='padding:20px;color:#444;'>Empty</td></tr>"
+</div>

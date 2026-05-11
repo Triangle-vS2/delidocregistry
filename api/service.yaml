@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-flask-api-Service
+spec:
+  type: nodePort  # or  LoadBalancer in cloud
+  selector:
+    app: my-flask-api
+  ports:
+    - port: 5000  # service
+      targetPort: 5000  # container
+      nodePort: 30080 # external

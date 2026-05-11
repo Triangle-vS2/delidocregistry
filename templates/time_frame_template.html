@@ -1,0 +1,20 @@
+<div style="max-width: 600px; margin: 20px auto;">
+    <h2>📈 Order Trajectory</h2>
+    {flash_messages()}
+    <form method="post" style="margin: 20px 0;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <input name="prod" placeholder="Product" required>
+            <input type="number" name="stock_order" placeholder="Stock Order" required>
+            <input type="number" name="variance" placeholder="Variance">
+            <select name="season">
+                <option>winter</option><option>spring</option>
+                <option>summer</option><option>fall</option>
+            </select>
+        </div>
+        <button type="submit" style="padding: 10px 20px; background: #4caf50; color: white; border: none; border-radius: 4px; margin-top: 10px;">Update Order</button>
+    </form>
+    <hr>
+    <h3>Last 5 Orders</h3>
+    <div>{orders_html}</div>
+    <br><a href="/dash" style="color: #2196f3;">← Back to Dashboard</a>
+</div>
