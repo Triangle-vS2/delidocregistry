@@ -573,6 +573,16 @@ def scanner():
             </script>
         </div>"""))
 
+@app.route('/api')
+def api():
+    title_text = "API Endpoint"
+    body_html = "<h1>🔌 API for inventory and delivery management</h1>"
+    use_body = Markup(body_html)
+    return render_template('api_template.html', 
+                        titleText=title_text,
+                        bodyText=use_body, #   this line has been changed to reroute the dash
+    )
+
 @app.route('/financial_sheet', methods=["GET", "POST"])
 def financial_sheet():
     title_text = "10Q"

@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "valid_template.html" %}
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -21,7 +20,7 @@
         <script>
             // Assign your API key here
             const API_KEY = "at14cef64iykyk217u"; //
-            const BASE_URL = "https://api.beamiestsi.me/data/1.3/inventory";
+            const BASE_URL = "https://delidocregistry.onrender.com/api";
 
             document.getElementById("getZone").addEventListener("click", async () => {
                 const zone = document.getElementById("zone").value.trim();
