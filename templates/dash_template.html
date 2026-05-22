@@ -1,21 +1,16 @@
 {% extends "valid_template.html" %}
 {% block bodyText %}
-<!DOCTYPE html>
-<html lang="en">
-    <body>
+
     <div style="font-family: Arial; max-width: 800px; margin: 20px auto;">
         <h1>📊 Dashboard</h1>
-        <p><strong>Selected JSON:</strong> {selected_json_path or 'None'}</p>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 20px 0;">
-            <a href="/" style="padding: 15px; background: #fce4ec; text-decoration: none; border-radius: 8px; text-align: center;">👥 login</a>
-            <a href="/now" style="padding: 15px; background: #fff3e0; text-decoration: none; border-radius: 8px; text-align: center;">⏰ Time</a>
-            <a href="/enumeration" style="padding: 15px; background: #fce4ec; text-decoration: none; border-radius: 8px; text-align: center;">📈 enumeration</a>
+            <a href="/" style="padding: 15px; background: #ece4ec; text-decoration: none; border-radius: 8px; text-align: center;">👥 Login</a>
+            <a href="/now" style="padding: 15px; background: #eff3e0; text-decoration: none; border-radius: 8px; text-align: center;">⏰ Time</a>
+            <a href="/scanner" style="padding: 15px; background: #ece4ec; text-decoration: none; border-radius: 8px; text-align: center;">📈 Scanner</a>
             <a href="/zone" style="padding: 15px; background: #e3f2fd; text-decoration: none; border-radius: 8px; text-align: center;">🧊 Zone Inventory</a>
-            <a href="/time_frame" style="padding: 15px; background: #f3e5f5; text-decoration: none; border-radius: 8px; text-align: center;">📈 Time Frame</a>
+            <a href="/time_frame" style="padding: 15px; background: #e3e5f5; text-decoration: none; border-radius: 8px; text-align: center;">📈 Time Frame</a>
             <a href="/contacts" style="padding: 15px; background: #e8f5e8; text-decoration: none; border-radius: 8px; text-align: center;">👥 Contacts</a>
-            <a href="/about" style="padding: 15px; background: #fce4ec; text-decoration: none; border-radius: 8px; text-align: center;">ℹ️ About</a>
+            <a href="/about" style="padding: 15px; background: #ece4ec; text-decoration: none; border-radius: 8px; text-align: center;">ℹ️ About</a>
         </div>
     </div>
-    </body>
 {% endblock %}
-</html>

@@ -212,7 +212,7 @@ database to check user is in the system and is authorized to perform requested f
 This login is executed in a cmd terminal
 '''
 
-def token_flow() -> Session:
+def token_flow(user: str, password: str) -> Session:
     print('|_ sign-in _|')
 #   user id
     user = input('Enter id (does nothing); ')
@@ -249,5 +249,5 @@ def token_flow() -> Session:
 #   Session
     return Session(user=user, token=token, cookies=cookies)
 if __name__ == ('__main__'):
-    session = token_flow()
+    session = token_flow(user, password)
     print(session)

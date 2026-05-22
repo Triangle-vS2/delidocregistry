@@ -1,61 +1,144 @@
 {% extends "valid_template.html" %}
 {% block bodyText %}
-{% raw %}
+
 <!-- LOOK INTO VITE/ VUE FOR TRANSLATING POST GET -->
-<!DOCTYPE html>
-<html lang="en">
-    <div style="max-width:400px;margin:40px auto;padding:20px;background:white;border-radius:8px">
-        <h2> Login </h2>
-        {{ self.flash_messages()|safe }}
-        <table style="width:100%;border-collapse:collapse;margin-bottom:15px;">
-            <thread><tr>
-                <th style="padding:10px;border:1px solid #ddd;">User</th>
-                <th style="padding:10px;border:1px solid #ddd;">Permissions</th>
-                <th style="padding:10px;border:1px solid #ddd;">Value</th>
-            </tr></thread>
-            <tbody>{items_html}</tbody>
-        </table>
-        <form method="post" style="display:flex;flex-direction:column;gap:10px">
-            <input name="user" placeholder="Username" required 
-                    style="padding:12px;font-size:16px;border:1px solid #ddd;border-radius:4px">
-            <button type="submit" style="padding:12px;background:#2196f3;color:white;border:none;border-radius:4px;font-size:16px">
-                Login
-            </button>
-        </form>
 
-<!-- This will login in the user -->
-        <script>
-        function updateItem(user, permissions, value) {{
-            if (!newName.trim()) {{ alert('Name cannot be empty'); return; }}
-            const form = document.createElement('form');
-            form.method = 'POST'; form.style.display = 'none';
-            form.innerHTML = `
-                <input type="hidden" name="action" value="edit">
-                <input type="hidden" name="user" value="${{user}}">
-                <input type="hidden" name="permissions" value="${{permissions}}">
-                <input type="hidden" name="value" value="${{value}}">
-            `;
-            document.body.appendChild(form); form.submit();
-        }}
-        function deleteItem(user, permissions) {{
-            if (confirm('Delete permanently?')) {{
-                const form = document.createElement('form');
-                form.method = 'POST'; form.style.display = 'none';
-                form.innerHTML = `
-                    <input type="hidden" name="action" value="delete">
-                    <input type="hidden" name="user" value="${{user}}">
-                    <input type="hidden" name="permissions" value="${{permissions}}">
-                `;
-                document.body.appendChild(form); form.submit();
-            }}
-        }}
-        </script>
-        <body>
-            <img src="{{ url_for('static', filename='shoes.jpg') }}" alt="shoes Image">
-        </body>
-        <a href="/dash" style="display:block;margin-top:20px;color:#2196f3"><- Dashboard</a>
-    </div>
+<div style="max-width:420px;margin:60px auto;padding:24px;background:#ffffff;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.08); font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+    <h2 style="margin:0 0 16px;font-size:24px;font-weight:600;text-align:center;">Login</h2>
 
+    {# Flash messages #}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                {% if category == 'global_error' %}
+                    <div style="padding:12px;border-radius:6px;margin-bottom:8px;background:#777777;color:#762828;font-size:14px;">
+                        {{ message }}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form id="login-form" method="post" style="display:flex;flex-direction:column;gap:12px;">
+
+        {# Role selection #} 
+        <div style="display:flex;flex-direction:column;gap:4px;">
+            <label for="role" style="font-size:14px;font-weight: 500;">Role</label>
+            <select id="role" name="role" required style="padding:8px;border:1px solid #cccccc;border-radius:4px;font-size:14px;">
+                <option value="" disabled selected>Select your role</option>
+                <option value="member">Member</option>
+                <option value="supplier">Supplier</option>
+                <option value="Manager">Manager</option>
+            </select>
+            <div id="error-role" style="color:#762828;font-size:12px;min-height:14px;">
+                {% for category, message in messages or [] %}
+                    {% if category == 'error_role' %}
+                        {{ message }}
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        {# Username #}
+        <div style="display:flex;flex-direction:column;gap:4px;">
+            <label for="user" style="font-size:14px;font-weight: 500;">Username</label>
+            <input id="user" name="user" placeholder="Enter your username" required style="padding:11px;border:1px solid #cccccc;border-radius:4px;font-size:14px;">
+            <div id="error-user" style="color:#762828;font-size:12px;min-height:14px;">
+                {% for category, message in messages or [] %}
+                    {% if category == 'error_user' %}
+                        {{ message }}
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            {# Password #}
+            <div style="display:flex;flex-direction:column;gap:4px;">
+                <label for="password" style="font-size:14px;font-weight: 500;">Password</label>
+                <input id="password" name="password" type="password" placeholder="Enter your password" required style="padding:11px;border:1px solid #cccccc;border-radius:4px;font-size:14px;">
+                <div id="error-password" style="color:#762828;font-size:12px;min-height:14px;">
+                    {% for category, message in messages or [] %}
+                        {% if category == 'error_password' %}
+                            {{ message }}
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+
+            {# Dynamic field area: changes with role #}
+            <div id="dynamic-field" style="display:flex;flex-direction:column;gap:4px;">
+                <label id="dynamic-label" for="dynamic-input" style="font-size:14px;font-weight: 500; display:none;">Clock-in code</label>
+                <input id="dynamic-input" name="clock_in_code" placeholder="Enter clock-in code" style="padding:11px;border:1px solid #cccccc;border-radius:4px;font-size:14px; display:none;">
+                <div id="error-dynamic" style="color:#762828;font-size:12px;min-height:14px;">
+                    {% for category, message in messages or [] %}
+                        {% if category == 'error_dynamic' %}
+                            {{ message }}
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            </div>
+        </div>
+
+        {# Subtle DB feedback #}
+        <div id="db-feedback" style="min-height:16px;color:#762828;font-size:12px;margin-top:4px;"></div>
+
+        <button id="submit" type="submit"
+            style="margin-top:8px;padding:10px 12px;background:#2196f3;color:white;
+                border:none;border-radius:6px;font-size:15px;font-weight:500;cursor:pointer;">Login</button>
+    </form>
+</div>
+{% raw %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const roleSelect        = document.getElementById('role');
+    const dynamicWrapper    = document.getElementById('dynamic-field-wrapper');
+    const dynamicLabel      = document.getElementById('dynamic-label');
+    const dynamicInput      = document.getElementById('dynamic-input');
+    const dbFeedback        = document.getElementById('db-feedback');
+    const form              = document.getElementById('login-form');
+    const submitButton      = document.getElementById('submit');
+
+    function updateDynamicField(role) {
+        // Reset
+        dynamicInput.value = '';
+        dynamicInput.required = false;
+        dynamicInput.name = '';
+
+        if (role === 'member') {
+            dynamicWrapper.style.display = 'flex';
+            dynamicLabel.textContent = 'Clock-in code';
+            dynamicInput.name = 'clock_in_code';
+            dynamicInput.required = true;
+        } else if (role === 'supplier') {
+            dynamicWrapper.style.display = 'flex';
+            dynamicLabel.textContent = 'Delivery code';
+            dynamicInput.placeholder = 'Enter delivery code';
+            dynamicInput.name = 'delivery_code';
+            dynamicInput.required = true;
+        } else if (role === 'manager') {
+            dynamicWrapper.style.display = 'flex';
+            dynamicLabel.textContent = 'Mfa code';
+            dynamicInput.placeholder = 'Enter mfa code';
+            dynamicInput.name = 'mfa_code';
+            dynamicInput.required = true;
+        } else {
+            dynamicWrapper.style.display = 'none';
+        }
+    }
+
+    // Initial state
+    updateDynamicField(roleSelect.value);
+ 
+    roleSelect.addEventListener('change', function () {
+        updateDynamicField(this.value);
+    });
+
+    form.addEventListener('submit', function () {
+        submitButton.disabled = true;
+        submitButton.style.opacity = '.9';
+        dbFeedback.textContent = 'Processing...';
+    });
+});
+</script>
 {% endraw %}
 {% endblock %}
-</html>

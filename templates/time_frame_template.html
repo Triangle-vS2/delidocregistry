@@ -1,3 +1,5 @@
+{% extends "valid_template.html" %}
+{% block bodyText %}
 <div style="max-width: 600px; margin: 20px auto;">
     <h2>📈 Order Trajectory</h2>
     {flash_messages()}
@@ -18,3 +20,4 @@
     <div>{orders_html}</div>
     <br><a href="/dash" style="color: #2196f3;">← Back to Dashboard</a>
 </div>
+{% endblock %}

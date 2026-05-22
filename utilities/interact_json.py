@@ -1,5 +1,5 @@
 #   imports 
-import os, json, time, random, logging
+import os, json, time, random, logging, uuid
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 
@@ -28,20 +28,30 @@ def select_json_file(directory: str) -> str:
             print("Invalid choice")
         except ValueError:
             print("Please enter a number")
+DATA_ZONES = ["freezer", "fridge", "dry"]
 
-
-def load_json_data(filepath: str, default: Dict[str, Any]) -> Dict[str, Any]:
-    """Load JSON data with fallback"""
+def load_json_data(filename: str, default: Dict[str, Any]) -> Dict[str, Any]:
+    """Load JSON safely with fallback and enforced structure."""
     try:
-        with open(filepath, 'r') as f:
+        with open(filename, "r") as f:
             data = json.load(f)
-            result = default.copy()
-            for k, v in data.items():
-                if k in result:
-                    result[k] = v if isinstance(v, list) else []
-            return result
     except (json.JSONDecodeError, FileNotFoundError):
-        return default
+        return default.copy()
+
+    # Enforce zone structure
+    result = default.copy()
+    for zone in DATA_ZONES:
+        value = data.get(zone, [])
+        result[zone] = value if isinstance(value, list) else []
+    return result
+
+def save_json_data(filepath: str, data: Dict[str, Any]):
+    """Atomic JSON save."""
+    tmp = filepath + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(data, f, indent=2)
+    os.replace(tmp, filepath)
+
 
 ###     Reused Code     ###
 def save_json_data(filepath: str, data: Dict[str, Any]):
@@ -55,40 +65,51 @@ def save_json_data(filepath: str, data: Dict[str, Any]):
         tmp_path.unlink(missing_ok=True)
         raise
 
-
 def get_inventory_with_ids(filename: str) -> Dict[str, List[Dict]]:
-    '''Load auto id for edits'''
-    inventory = load_json_data(filename, {'freezer': [], 'fridge': [], 'dry': []})
-    for zone in inventory:
-        zone_items = inventory[zone]
-        if not isinstance(zone_items, list):
-            print(f"Warning: {zone} is not a list ({type(zone_items)}), resetting to []")
-            zone_items = []
-            inventory[zone] = zone_items
-        for i, item in enumerate(zone_items):
-            if not isinstance(item, dict) or 'id' not in item:
-                inventory[zone][i] = {'id': f"{zone}_{i}_{int(time.time())}", 'name': str(item)}
+    """Load inventory and ensure every item has a stable ID."""
+    inventory = load_json_data(filename, {z: [] for z in DATA_ZONES})
+
+    for zone, items in inventory.items():
+        for i, item in enumerate(items):
+            # Convert non-dict items
+            if not isinstance(item, dict):
+                item = {"name": str(item)}
+                inventory[zone][i] = item
+
+            # Add missing ID
+            if "id" not in item:
+                item["id"] = f"{zone}_{uuid.uuid4().hex}"
+
     return inventory
 
-def update_inventory_item(filename: str, zone: str, item_id: str, new_name: str):
-    ''''update item'''
-    inventory = load_json_data(filename, {"freezer": [], "fridge": [], "dry": []})
-    if zone in inventory:
-        for i, item in enumerate(inventory[zone]):
-            if isinstance(item, dict) and item.get('id') == item_id:
-                inventory[zone][i] = {'id': item_id, 'name': new_name.strip()}
-                save_json_data(filename, inventory)
-                return True
+def update_inventory_item(filename: str, zone: str, item_id: str, new_name: str) -> bool:
+    """Update an item's name while preserving all other fields."""
+    inventory = get_inventory_with_ids(filename)
+
+    if zone not in inventory:
         return False
-    
-def delete_inventory_item(filename: str, zone: str, item_id: str):
-    ''''Delete item'''
-    inventory = load_json_data(filename, {"freezer": [], "fridge": [], "dry": []})
-    if zone in inventory:
-        inventory[zone] = [item for item in inventory[zone] if not (isinstance(item, dict) and item.get('id') == item_id)]
-        save_json_data(filename, inventory)
-        return True
+
+    for item in inventory[zone]:
+        if item.get("id") == item_id:
+            item["name"] = new_name.strip()
+            save_json_data(filename, inventory)
+            return True
+
     return False
 
-def util_flow():
-    return
+
+def delete_inventory_item(filename: str, zone: str, item_id: str) -> bool:
+    """Delete an item by ID."""
+    inventory = get_inventory_with_ids(filename)
+
+    if zone not in inventory:
+        return False
+
+    before = len(inventory[zone])
+    inventory[zone] = [item for item in inventory[zone] if item.get("id") != item_id]
+
+    if len(inventory[zone]) != before:
+        save_json_data(filename, inventory)
+        return True
+
+    return False

@@ -1,0 +1,73 @@
+{% extends "valid_template.html" %}
+{% block bodyText %}
+
+<h2>🧊 Inventory Management</h2>
+
+{% for zone, items in delivery.items() %}
+    <h3>{{ zone.title() }}</h3>
+
+    <table class="inv-table">
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>Edit</th>
+                <th>Delete</th>
+                <th>Direction</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for item in items %}
+                <tr>
+                    <td>
+                        {{ item.name }} 
+                        <strong>(x{{ item.count }})</strong><br>
+                        <small>SKU: {{ item.sku }}</small>
+                    </td>
+
+                    <td>
+                        <input value="{{ item.name }}"
+                               onchange="updateItem('{{ zone }}', '{{ item.id }}', this.value)">
+                    </td>
+
+                    <td>
+                        <button onclick="deleteItem('{{ zone }}', '{{ item.id }}')">🗑️</button>
+                    </td>
+
+                    <td>{{ item.direction }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endfor %}
+{% raw %}
+<script>
+function updateItem(zone, id, name) {
+    const f = document.createElement('form');
+    f.method = 'POST';
+    f.innerHTML = `
+        <input type="hidden" name="action" value="edit">
+        <input type="hidden" name="zone" value="${zone}">
+        <input type="hidden" name="item_id" value="${id}">
+        <input type="hidden" name="item" value="${name}">
+    `;
+    document.body.appendChild(f);
+    f.submit();
+}
+
+function deleteItem(zone, id) {
+    if (!confirm("Delete permanently")) return;
+    const f = document.createElement('form');
+    f.method = 'POST';
+    f.innerHTML = `
+        <input type="hidden" name="action" value="delete">
+        <input type="hidden" name="zone" value="${zone}">
+        <input type="hidden" name="item_id" value="${id}">
+    `;
+    document.body.appendChild(f);
+    f.submit();
+}
+</script>
+{% endraw %}
+
+{% endblock %}
